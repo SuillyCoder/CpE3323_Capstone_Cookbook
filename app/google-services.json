@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "744456342514",
+    "project_id": "cpe3323-capstone-cookbook",
+    "storage_bucket": "cpe3323-capstone-cookbook.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:744456342514:android:717e0a5dd3bd60c3a8396b",
+        "android_client_info": {
+          "package_name": "com.example.cpe3323_capstone_cookbook"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpIr9BYzjlnS4IheVU3nTWtqcp9rK3CmE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

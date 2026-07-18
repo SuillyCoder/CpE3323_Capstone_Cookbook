@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.cpe3323_capstone_cookbook.ui.auth.LoginScreen
 import com.example.cpe3323_capstone_cookbook.ui.auth.RegisterScreen
+import com.example.cpe3323_capstone_cookbook.ui.recipe.RecipeListScreen
 import com.example.cpe3323_capstone_cookbook.ui.theme.CpE3323_Capstone_CookbookTheme
 
 class MainActivity : ComponentActivity() {
@@ -27,7 +28,7 @@ class MainActivity : ComponentActivity() {
                             onNavigateToRegister = { navController.navigate("register") }
                         )
                     }
-                    composable("home") { HomePlaceholder() }
+                    composable("home") { RecipeListScreen() }
                     composable("register") {
                         RegisterScreen(
                             onRegisterSuccess = { navController.navigate("home") { popUpTo("login") { inclusive = true } } },
@@ -38,9 +39,4 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
-
-@Composable
-fun HomePlaceholder() {
-    Text("Home screen — logged in!")
 }

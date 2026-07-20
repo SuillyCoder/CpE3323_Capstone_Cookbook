@@ -1,16 +1,21 @@
 package com.example.cpe3323_capstone_cookbook
 
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType  // Added import
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument  // Added import
+import com.example.cpe3323_capstone_cookbook.ui.HomeScreen  // Added import
 import com.example.cpe3323_capstone_cookbook.ui.auth.LoginScreen
 import com.example.cpe3323_capstone_cookbook.ui.auth.RegisterScreen
+import com.example.cpe3323_capstone_cookbook.ui.recipe.AddEditRecipeScreen  // Fixed import path
 import com.example.cpe3323_capstone_cookbook.ui.recipe.RecipeListScreen
 import com.example.cpe3323_capstone_cookbook.ui.theme.CpE3323_Capstone_CookbookTheme
 
@@ -28,7 +33,29 @@ class MainActivity : ComponentActivity() {
                             onNavigateToRegister = { navController.navigate("register") }
                         )
                     }
-                    composable("home") { RecipeListScreen() }
+                    composable("home") {
+                        HomeScreen(
+                            onAddClick = { navController.navigate("recipeForm") },
+                            onRecipeClick = { recipeId -> navController.navigate("recipeForm/$recipeId") }
+                        )
+                    }
+                    composable("recipeForm") {
+                        AddEditRecipeScreen(
+                            recipeId = null,
+                            onDone = { navController.popBackStack() },
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable(
+                        route = "recipeForm/{recipeId}",
+                        arguments = listOf(navArgument("recipeId") { type = NavType.StringType })
+                    ) { backStackEntry ->
+                        AddEditRecipeScreen(
+                            recipeId = backStackEntry.arguments?.getString("recipeId"),
+                            onDone = { navController.popBackStack() },
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
                     composable("register") {
                         RegisterScreen(
                             onRegisterSuccess = { navController.navigate("home") { popUpTo("login") { inclusive = true } } },

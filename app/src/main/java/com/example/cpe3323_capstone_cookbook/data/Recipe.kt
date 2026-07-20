@@ -7,6 +7,7 @@ data class Recipe (
     val description: String = "",
     val ingredients: List<String> = emptyList(),
     val instructions: String = "",
+    val imageUrl: String = "",
     val authorId: String = "",
     val timestamp: Long = System.currentTimeMillis()
 )

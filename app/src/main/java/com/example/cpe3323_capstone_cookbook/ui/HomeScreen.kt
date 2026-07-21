@@ -8,10 +8,13 @@ import com.example.cpe3323_capstone_cookbook.ui.recipe.RecipeListScreen
 @Composable
 fun HomeScreen(
     onAddClick: () -> Unit,
-    onRecipeClick: (Recipe) -> Unit   // was (String) -> Unit
+    onEditClick: (Recipe) -> Unit,
+    onViewClick: (Recipe) -> Unit
 ) {
     RecipeListScreen(
         mode = RecipeListMode.MINE,
         onAddClick = onAddClick,
-        onRecipeClick = onRecipeClick)
+        onRecipeClick = onEditClick,
+        onViewClick = onViewClick
+    )
 }

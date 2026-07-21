@@ -38,13 +38,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.cpe3323_capstone_cookbook.data.Recipe
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Visibility
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeListScreen(
     mode: RecipeListMode,
     onAddClick: () -> Unit,
-    onRecipeClick: (Recipe) -> Unit,
+    onRecipeClick: (Recipe) -> Unit,   // now specifically means "edit"
+    onViewClick: (Recipe) -> Unit,     // new
     viewModel: RecipeViewModel = viewModel()
 ) {
     val uiState by (if (mode == RecipeListMode.MINE) viewModel.myRecipesState else viewModel.uiState)
@@ -98,34 +101,35 @@ fun RecipeListScreen(
                     LazyColumn(modifier = Modifier.padding(innerPadding)) {
                         items(state.recipes, key = { it.id }) { recipe ->
                             ListItem(
-                                modifier = Modifier.clickable { if (mode == RecipeListMode.MINE) onRecipeClick(recipe) },
                                 leadingContent = {
                                     if (recipe.imageUrl.isNotBlank()) {
                                         AsyncImage(
                                             model = recipe.imageUrl,
                                             contentDescription = recipe.title,
                                             contentScale = ContentScale.Crop,
-                                            modifier = Modifier
-                                                .size(48.dp)
-                                                .clip(RoundedCornerShape(8.dp))
+                                            modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp))
                                         )
                                     } else {
-                                        Icon(
-                                            Icons.Filled.RestaurantMenu,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(48.dp)
-                                        )
+                                        Icon(Icons.Filled.RestaurantMenu, contentDescription = null, modifier = Modifier.size(48.dp))
                                     }
                                 },
                                 headlineContent = { Text(recipe.title) },
                                 supportingContent = { Text(recipe.description) },
-                                trailingContent = if (mode == RecipeListMode.MINE) {
-                                    {
-                                        IconButton(onClick = { recipeToDelete = recipe }) {
-                                            Icon(Icons.Filled.Delete, contentDescription = "Delete ${recipe.title}")
+                                trailingContent = {
+                                    Row {
+                                        IconButton(onClick = { onViewClick(recipe) }) {
+                                            Icon(Icons.Filled.Visibility, contentDescription = "View ${recipe.title}")
+                                        }
+                                        if (mode == RecipeListMode.MINE) {
+                                            IconButton(onClick = { onRecipeClick(recipe) }) {
+                                                Icon(Icons.Filled.Edit, contentDescription = "Edit ${recipe.title}")
+                                            }
+                                            IconButton(onClick = { recipeToDelete = recipe }) {
+                                                Icon(Icons.Filled.Delete, contentDescription = "Delete ${recipe.title}")
+                                            }
                                         }
                                     }
-                                } else null
+                                }
                             )
                         }
                     }

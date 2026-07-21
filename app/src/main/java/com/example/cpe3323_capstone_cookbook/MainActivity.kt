@@ -16,6 +16,7 @@ import com.example.cpe3323_capstone_cookbook.ui.HomeScreen  // Added import
 import com.example.cpe3323_capstone_cookbook.ui.auth.LoginScreen
 import com.example.cpe3323_capstone_cookbook.ui.auth.RegisterScreen
 import com.example.cpe3323_capstone_cookbook.ui.recipe.AddEditRecipeScreen  // Fixed import path
+import com.example.cpe3323_capstone_cookbook.ui.recipe.RecipeDetailScreen
 import com.example.cpe3323_capstone_cookbook.ui.recipe.RecipeListScreen
 import com.example.cpe3323_capstone_cookbook.ui.theme.CpE3323_Capstone_CookbookTheme
 
@@ -37,7 +38,8 @@ class MainActivity : ComponentActivity() {
                     composable("home") {
                         HomeScreen(
                             onAddClick = { navController.navigate("recipeForm") },
-                            onRecipeClick = { recipe -> navController.navigate("recipeForm/${recipe.authorId}/${recipe.id}") }
+                            onEditClick = { recipe -> navController.navigate("recipeForm/${recipe.authorId}/${recipe.id}") },
+                            onViewClick = { recipe -> navController.navigate("recipeDetail/${recipe.authorId}/${recipe.id}") }
                         )
                     }
                     composable("recipeForm") {
@@ -48,16 +50,15 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable(
-                        route = "recipeForm/{authorId}/{recipeId}",
+                        route = "recipeDetail/{authorId}/{recipeId}",
                         arguments = listOf(
                             navArgument("authorId") { type = NavType.StringType },
                             navArgument("recipeId") { type = NavType.StringType }
                         )
                     ) { backStackEntry ->
-                        AddEditRecipeScreen(
-                            recipeId = backStackEntry.arguments?.getString("recipeId"),
-                            authorId = backStackEntry.arguments?.getString("authorId"),
-                            onDone = { navController.popBackStack() },
+                        RecipeDetailScreen(
+                            recipeId = backStackEntry.arguments?.getString("recipeId") ?: "",
+                            authorId = backStackEntry.arguments?.getString("authorId") ?: "",
                             onBack = { navController.popBackStack() }
                         )
                     }

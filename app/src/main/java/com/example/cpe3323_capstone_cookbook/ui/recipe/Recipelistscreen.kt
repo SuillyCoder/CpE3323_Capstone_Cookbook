@@ -44,7 +44,7 @@ import com.example.cpe3323_capstone_cookbook.data.Recipe
 fun RecipeListScreen(
     mode: RecipeListMode,
     onAddClick: () -> Unit,
-    onRecipeClick: (String) -> Unit,
+    onRecipeClick: (Recipe) -> Unit,
     viewModel: RecipeViewModel = viewModel()
 ) {
     val uiState by (if (mode == RecipeListMode.MINE) viewModel.myRecipesState else viewModel.uiState)
@@ -98,7 +98,7 @@ fun RecipeListScreen(
                     LazyColumn(modifier = Modifier.padding(innerPadding)) {
                         items(state.recipes, key = { it.id }) { recipe ->
                             ListItem(
-                                modifier = Modifier.clickable { onRecipeClick(recipe.id) },
+                                modifier = Modifier.clickable { onRecipeClick(recipe) },
                                 leadingContent = {
                                     if (recipe.imageUrl.isNotBlank()) {
                                         AsyncImage(
@@ -141,7 +141,7 @@ fun RecipeListScreen(
             text = { Text("Are you sure you want to delete \"${recipe.title}\"? This can't be undone.") },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.deleteRecipe(recipe.id)
+                    viewModel.deleteRecipe(recipe.authorId,recipe.id)
                     recipeToDelete = null
                 }) {
                     Text("Delete")

@@ -36,22 +36,26 @@ class MainActivity : ComponentActivity() {
                     composable("home") {
                         HomeScreen(
                             onAddClick = { navController.navigate("recipeForm") },
-                            onRecipeClick = { recipeId -> navController.navigate("recipeForm/$recipeId") }
+                            onRecipeClick = { recipe -> navController.navigate("recipeForm/${recipe.authorId}/${recipe.id}") }
                         )
                     }
                     composable("recipeForm") {
-                        AddEditRecipeScreen(
-                            recipeId = null,
-                            onDone = { navController.popBackStack() },
+                        AddEditRecipeScreen(recipeId = null,
+                            authorId = null, onDone = { navController.popBackStack() },
                             onBack = { navController.popBackStack() }
                         )
                     }
+
                     composable(
-                        route = "recipeForm/{recipeId}",
-                        arguments = listOf(navArgument("recipeId") { type = NavType.StringType })
+                        route = "recipeForm/{authorId}/{recipeId}",
+                        arguments = listOf(
+                            navArgument("authorId") { type = NavType.StringType },
+                            navArgument("recipeId") { type = NavType.StringType }
+                        )
                     ) { backStackEntry ->
                         AddEditRecipeScreen(
                             recipeId = backStackEntry.arguments?.getString("recipeId"),
+                            authorId = backStackEntry.arguments?.getString("authorId"),
                             onDone = { navController.popBackStack() },
                             onBack = { navController.popBackStack() }
                         )

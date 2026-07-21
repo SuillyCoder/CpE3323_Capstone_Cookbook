@@ -48,11 +48,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.cpe3323_capstone_cookbook.data.copyImageToInternalStorage
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddEditRecipeScreen(
     recipeId: String?,
+    authorId: String?,
     onDone: () -> Unit,
     onBack: () -> Unit,
     viewModel: RecipeViewModel = viewModel()
@@ -67,13 +70,13 @@ fun AddEditRecipeScreen(
     var existingImageUrl by remember { mutableStateOf("") }
     var existingAuthorId by remember { mutableStateOf("") }
     var isLoadingExisting by remember { mutableStateOf(isEditMode) }
-
     val saveState by viewModel.saveState.collectAsState()
+    val context = LocalContext.current
 
     // Prefill the form when editing an existing recipe.
     LaunchedEffect(recipeId) {
-        if (recipeId != null) {
-            val existing = viewModel.getRecipeById(recipeId)
+        if (recipeId != null  && authorId != null) {
+            val existing = viewModel.getRecipeById(authorId, recipeId)
             if (existing != null) {
                 title = existing.title
                 description = existing.description
@@ -229,13 +232,14 @@ fun AddEditRecipeScreen(
 
             Button(
                 onClick = {
+                    val localPath = pickedImageUri?.let { uri -> copyImageToInternalStorage(context, uri) }
                     viewModel.saveRecipe(
                         existingRecipeId = recipeId,
                         title = title,
                         description = description,
                         ingredients = ingredients.toList(),
                         instructions = instructions,
-                        imageUri = pickedImageUri,
+                        localImagePath = localPath,
                         existingImageUrl = existingImageUrl,
                         existingAuthorId = existingAuthorId
                     )

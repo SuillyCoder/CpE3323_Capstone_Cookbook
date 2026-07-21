@@ -64,25 +64,21 @@ class RecipeViewModel(
 
     private fun observeMyRecipes() {
         viewModelScope.launch {
-            repository.getRecipes().collect { result ->
-                val currentUserId = authRepository.currentUserId
+            val currentUserId = authRepository.currentUserId
+            if (currentUserId == null) {
+                _myRecipesState.value = RecipeUiState.Success(emptyList())
+                return@launch
+            }
+            repository.getRecipesForUser(currentUserId).collect { result ->
                 _myRecipesState.value = result.fold(
-                    onSuccess = { recipes ->
-                        val myRecipes = if (currentUserId != null) {
-                            recipes.filter { it.authorId == currentUserId }
-                        } else {
-                            emptyList()
-                        }
-                        RecipeUiState.Success(myRecipes)
-                    },
+                    onSuccess = { RecipeUiState.Success(it) },
                     onFailure = { RecipeUiState.Error(it.message ?: "Failed to load my recipes") }
                 )
             }
         }
     }
-
-    suspend fun getRecipeById(recipeId: String): Recipe? {
-        return repository.getRecipe(recipeId).getOrNull()
+    suspend fun getRecipeById(authorId: String, recipeId: String): Recipe? {
+        return repository.getRecipe(authorId, recipeId).getOrNull()
     }
 
     fun saveRecipe(
@@ -91,23 +87,15 @@ class RecipeViewModel(
         description: String,
         ingredients: List<String>,
         instructions: String,
-        imageUri: Uri?,
+        localImagePath: String?,
         existingImageUrl: String,
         existingAuthorId: String
     ) {
         viewModelScope.launch {
             _saveState.value = SaveState.Saving
 
-            // TODO: Upload image to Firebase Storage if imageUri is not null
-            // For now, we'll use existingImageUrl or a placeholder
-            val finalImageUrl = if (imageUri != null) {
-                // Upload image and get URL
-                // This requires Firebase Storage implementation
-                // For now, use placeholder
-                existingImageUrl
-            } else {
-                existingImageUrl
-            }
+            val finalImageUrl = localImagePath ?: existingImageUrl
+            val authorId = existingAuthorId.ifEmpty { authRepository.currentUserId ?: "" }
 
             val recipe = Recipe(
                 id = existingRecipeId ?: "",
@@ -116,7 +104,7 @@ class RecipeViewModel(
                 ingredients = ingredients.filter { it.isNotBlank() },
                 instructions = instructions,
                 imageUrl = finalImageUrl,
-                authorId = existingAuthorId.ifEmpty { authRepository.currentUserId ?: "" },
+                authorId = authorId,
                 timestamp = System.currentTimeMillis()
             )
 
@@ -149,9 +137,9 @@ class RecipeViewModel(
         }
     }
 
-    fun deleteRecipe(recipeId: String) {
+    fun deleteRecipe(authorId: String, recipeId: String) {
         viewModelScope.launch {
-            _actionState.value = repository.deleteRecipe(recipeId)
+            _actionState.value = repository.deleteRecipe(authorId, recipeId)
         }
     }
 

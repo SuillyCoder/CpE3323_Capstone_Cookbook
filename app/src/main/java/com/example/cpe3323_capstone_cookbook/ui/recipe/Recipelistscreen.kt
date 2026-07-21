@@ -98,7 +98,7 @@ fun RecipeListScreen(
                     LazyColumn(modifier = Modifier.padding(innerPadding)) {
                         items(state.recipes, key = { it.id }) { recipe ->
                             ListItem(
-                                modifier = Modifier.clickable { onRecipeClick(recipe) },
+                                modifier = Modifier.clickable { if (mode == RecipeListMode.MINE) onRecipeClick(recipe) },
                                 leadingContent = {
                                     if (recipe.imageUrl.isNotBlank()) {
                                         AsyncImage(

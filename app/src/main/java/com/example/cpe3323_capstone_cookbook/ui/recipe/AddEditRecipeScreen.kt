@@ -21,8 +21,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.PhotoCamera  // Added this import
-import androidx.compose.material.icons.filled.RemoveCircle  // Added this import
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,11 +45,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.example.cpe3323_capstone_cookbook.data.copyImageToInternalStorage
-import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,6 +60,7 @@ fun AddEditRecipeScreen(
     viewModel: RecipeViewModel = viewModel()
 ) {
     val isEditMode = recipeId != null
+    val context = LocalContext.current
 
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -71,11 +71,10 @@ fun AddEditRecipeScreen(
     var existingAuthorId by remember { mutableStateOf("") }
     var isLoadingExisting by remember { mutableStateOf(isEditMode) }
     val saveState by viewModel.saveState.collectAsState()
-    val context = LocalContext.current
 
     // Prefill the form when editing an existing recipe.
     LaunchedEffect(recipeId) {
-        if (recipeId != null  && authorId != null) {
+        if (recipeId != null && authorId != null) {
             val existing = viewModel.getRecipeById(authorId, recipeId)
             if (existing != null) {
                 title = existing.title
@@ -232,16 +231,16 @@ fun AddEditRecipeScreen(
 
             Button(
                 onClick = {
-                    val localPath = pickedImageUri?.let { uri -> copyImageToInternalStorage(context, uri) }
                     viewModel.saveRecipe(
                         existingRecipeId = recipeId,
                         title = title,
                         description = description,
                         ingredients = ingredients.toList(),
                         instructions = instructions,
-                        localImagePath = localPath,
+                        imageUri = pickedImageUri,
                         existingImageUrl = existingImageUrl,
-                        existingAuthorId = existingAuthorId
+                        existingAuthorId = existingAuthorId,
+                        context = context
                     )
                 },
                 enabled = saveState !is SaveState.Saving && title.isNotBlank(),

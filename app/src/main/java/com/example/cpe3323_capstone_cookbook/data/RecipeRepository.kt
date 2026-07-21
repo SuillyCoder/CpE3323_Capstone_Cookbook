@@ -8,7 +8,8 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 
 class RecipeRepository(
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance(),
+    private val storageUtils: FirebaseStorageUtils = FirebaseStorageUtils() // Add this
 ) {
     private val usersCollection = firestore.collection("users")
 
@@ -67,7 +68,19 @@ class RecipeRepository(
 
     suspend fun deleteRecipe(authorId: String, recipeId: String): Result<Unit> {
         return try {
+            // First get the recipe to get the image URL
+            val recipe = getRecipe(authorId, recipeId).getOrNull()
+
+            // Delete the recipe from Firestore
             recipesCollectionFor(authorId).document(recipeId).delete().await()
+
+            // Delete the image from Firebase Storage if it exists
+            recipe?.imageUrl?.let { imageUrl ->
+                if (imageUrl.isNotBlank() && imageUrl.startsWith("http")) {
+                    storageUtils.deleteRecipeImage(imageUrl)
+                }
+            }
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

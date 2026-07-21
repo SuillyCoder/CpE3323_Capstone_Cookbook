@@ -22,6 +22,7 @@ import com.example.cpe3323_capstone_cookbook.ui.theme.CpE3323_Capstone_CookbookT
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
         setContent {
             CpE3323_Capstone_CookbookTheme {

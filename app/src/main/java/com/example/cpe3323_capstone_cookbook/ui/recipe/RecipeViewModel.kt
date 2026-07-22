@@ -9,6 +9,8 @@ import com.example.cpe3323_capstone_cookbook.data.AuthRepository
 import com.example.cpe3323_capstone_cookbook.data.FirebaseStorageUtils
 import com.example.cpe3323_capstone_cookbook.data.Recipe
 import com.example.cpe3323_capstone_cookbook.data.RecipeRepository
+import com.example.cpe3323_capstone_cookbook.data.SavedRepository
+import com.example.cpe3323_capstone_cookbook.data.UserRepository
 import com.example.cpe3323_capstone_cookbook.data.copyImageToInternalStorage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,7 +33,8 @@ sealed interface SaveState {
 class RecipeViewModel(
     private val repository: RecipeRepository = RecipeRepository(),
     private val authRepository: AuthRepository = AuthRepository(),
-    private val storageUtils: FirebaseStorageUtils = FirebaseStorageUtils()
+    private val storageUtils: FirebaseStorageUtils = FirebaseStorageUtils(),
+    private val userRepository: UserRepository = UserRepository()
 ) : ViewModel() {
 
     companion object {
@@ -46,6 +49,12 @@ class RecipeViewModel(
     private val _myRecipesState = MutableStateFlow<RecipeUiState>(RecipeUiState.Loading)
     val myRecipesState: StateFlow<RecipeUiState> = _myRecipesState.asStateFlow()
 
+    private val _savedRecipesState = MutableStateFlow<RecipeUiState>(RecipeUiState.Loading)
+    val savedRecipesState: StateFlow<RecipeUiState> = _savedRecipesState.asStateFlow()
+
+    private val _savedRecipeIds = MutableStateFlow<Set<String>>(emptySet())
+    val savedRecipeIds: StateFlow<Set<String>> = _savedRecipeIds.asStateFlow()
+
     // Drives save operation state for AddEditRecipeScreen
     private val _saveState = MutableStateFlow<SaveState>(SaveState.Idle)
     val saveState: StateFlow<SaveState> = _saveState.asStateFlow()
@@ -54,11 +63,22 @@ class RecipeViewModel(
     private val _actionState = MutableStateFlow<Result<Unit>?>(null)
     val actionState: StateFlow<Result<Unit>?> = _actionState.asStateFlow()
 
-    // Store context for local storage operations (set from AddEditRecipeScreen)
+    // Store context for local storage operations
     private var appContext: Context? = null
+    private var savedRepository: SavedRepository? = null
+    private var savedRecipesObserving = false
+
+    fun ensureInitialized(context: Context) {
+        appContext = context.applicationContext
+        savedRepository = SavedRepository.getInstance(context)
+        if (!savedRecipesObserving) {
+            savedRecipesObserving = true
+            observeSavedRecipes()
+        }
+    }
 
     fun setContext(context: Context) {
-        appContext = context
+        ensureInitialized(context)
     }
 
     init {
@@ -97,6 +117,44 @@ class RecipeViewModel(
         return repository.getRecipe(authorId, recipeId).getOrNull()
     }
 
+    private fun observeSavedRecipes() {
+        viewModelScope.launch {
+            val userId = authRepository.currentUserId ?: run {
+                _savedRecipesState.value = RecipeUiState.Success(emptyList())
+                _savedRecipeIds.value = emptySet()
+                return@launch
+            }
+            val savedRepo = savedRepository ?: run {
+                _savedRecipesState.value = RecipeUiState.Success(emptyList())
+                _savedRecipeIds.value = emptySet()
+                return@launch
+            }
+            savedRepo.getSavedRecipes(userId).collect { result ->
+                _savedRecipesState.value = result.fold(
+                    onSuccess = { RecipeUiState.Success(it) },
+                    onFailure = { RecipeUiState.Error("Could not load saved recipes") }
+                )
+                _savedRecipeIds.value = result.getOrNull()?.map { it.id }?.toSet() ?: emptySet()
+            }
+        }
+    }
+
+    fun loadSavedRecipes() {
+        // Saved recipes are observed continuously in init.
+    }
+
+    fun loadSavedIds() {
+        // Saved recipe IDs are observed continuously in init.
+    }
+
+    fun toggleSaved(recipe: Recipe) {
+        viewModelScope.launch {
+            val userId = authRepository.currentUserId ?: return@launch
+            val savedRepo = savedRepository ?: return@launch
+            savedRepo.toggleSaved(userId, recipe)
+        }
+    }
+
     fun saveRecipe(
         existingRecipeId: String?,
         title: String,
@@ -106,7 +164,10 @@ class RecipeViewModel(
         imageUri: Uri?,
         existingImageUrl: String,
         existingAuthorId: String,
-        context: Context  // Add context parameter
+        cuisine: String,
+        cookTimeMinutes: Int,
+        difficulty: String,
+        context: Context
     ) {
         viewModelScope.launch {
             _saveState.value = SaveState.Saving
@@ -169,7 +230,11 @@ class RecipeViewModel(
                     uploadMethod = "existing"
                 }
 
-                // Create recipe object
+                val authorName = userRepository.getUser(authorId)
+                    .getOrNull()
+                    ?.name
+                    .orEmpty()
+
                 val recipe = Recipe(
                     id = existingRecipeId ?: "",
                     title = title,
@@ -178,6 +243,10 @@ class RecipeViewModel(
                     instructions = instructions,
                     imageUrl = finalImageUrl,
                     authorId = authorId,
+                    authorName = authorName,
+                    cuisine = cuisine,
+                    cookTimeMinutes = cookTimeMinutes,
+                    difficulty = difficulty,
                     timestamp = System.currentTimeMillis()
                 )
 

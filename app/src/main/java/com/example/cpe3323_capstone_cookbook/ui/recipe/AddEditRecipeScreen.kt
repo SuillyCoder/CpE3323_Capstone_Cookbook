@@ -25,6 +25,9 @@ import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,6 +52,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.cpe3323_capstone_cookbook.data.CUISINE_OPTIONS
+import com.example.cpe3323_capstone_cookbook.data.DIFFICULTY_OPTIONS
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,6 +74,11 @@ fun AddEditRecipeScreen(
     var pickedImageUri by remember { mutableStateOf<Uri?>(null) }
     var existingImageUrl by remember { mutableStateOf("") }
     var existingAuthorId by remember { mutableStateOf("") }
+    var cuisine by remember { mutableStateOf("Other") }
+    var cookTime by remember { mutableStateOf("30") }
+    var difficulty by remember { mutableStateOf("Easy") }
+    var cuisineExpanded by remember { mutableStateOf(false) }
+    var difficultyExpanded by remember { mutableStateOf(false) }
     var isLoadingExisting by remember { mutableStateOf(isEditMode) }
     val saveState by viewModel.saveState.collectAsState()
 
@@ -84,6 +94,9 @@ fun AddEditRecipeScreen(
                 instructions = existing.instructions
                 existingImageUrl = existing.imageUrl
                 existingAuthorId = existing.authorId
+                cuisine = existing.cuisine.ifBlank { "Other" }
+                cookTime = existing.cookTimeMinutes.toString()
+                difficulty = existing.difficulty.ifBlank { "Easy" }
             }
             isLoadingExisting = false
         }
@@ -181,6 +194,73 @@ fun AddEditRecipeScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ExposedDropdownMenuBox(
+                    expanded = cuisineExpanded,
+                    onExpandedChange = { cuisineExpanded = it },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    OutlinedTextField(
+                        value = cuisine,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Cuisine") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = cuisineExpanded) },
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = cuisineExpanded,
+                        onDismissRequest = { cuisineExpanded = false }
+                    ) {
+                        CUISINE_OPTIONS.forEach { option ->
+                            DropdownMenuItem(
+                                text = { Text(option) },
+                                onClick = {
+                                    cuisine = option
+                                    cuisineExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                OutlinedTextField(
+                    value = cookTime,
+                    onValueChange = { cookTime = it.filter { ch -> ch.isDigit() } },
+                    label = { Text("Minutes") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
+            ExposedDropdownMenuBox(
+                expanded = difficultyExpanded,
+                onExpandedChange = { difficultyExpanded = it },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = difficulty,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Difficulty") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = difficultyExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = difficultyExpanded,
+                    onDismissRequest = { difficultyExpanded = false }
+                ) {
+                    DIFFICULTY_OPTIONS.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = {
+                                difficulty = option
+                                difficultyExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
             // --- Ingredients (dynamic list) ---
             Text("Ingredients", style = MaterialTheme.typography.titleMedium)
             ingredients.forEachIndexed { index, value ->
@@ -240,6 +320,9 @@ fun AddEditRecipeScreen(
                         imageUri = pickedImageUri,
                         existingImageUrl = existingImageUrl,
                         existingAuthorId = existingAuthorId,
+                        cuisine = cuisine,
+                        cookTimeMinutes = cookTime.toIntOrNull() ?: 30,
+                        difficulty = difficulty,
                         context = context
                     )
                 },
